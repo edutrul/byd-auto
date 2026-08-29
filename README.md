@@ -57,6 +57,9 @@ never sends SSH keys or agent credentials to the browser.
 See [`docs/HERDR_GATEWAY.md`](docs/HERDR_GATEWAY.md) for the verified Herdr
 0.8.2 APIs, security model, VPS commands, and smoke tests.
 
+For the exact laptop tunnel, browser test steps, and troubleshooting handoff,
+see [`docs/HANDOFF.md`](docs/HANDOFF.md).
+
 ## Install with ADB (optional)
 
 ```bash
@@ -83,5 +86,6 @@ build.sh                                    Reproducible APK build/sign pipeline
 server/                                     Bun WebSocket/Herdr gateway proof
 web/                                        Touch-friendly xterm.js proof client
 docs/HERDR_GATEWAY.md                       Verified protocol and operations
+docs/HANDOFF.md                             Fast laptop/VPS test and handoff guide
 CLAUDE.md                                   Repository workflow guidance
 ```
