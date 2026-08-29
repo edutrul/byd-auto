@@ -3,34 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>EDUARDO — Herdr Terminal</title>
+  <title>BYD · EDUARDO</title>
   <link rel="stylesheet" href="/vendor/xterm.css">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <main class="app-shell">
-    <header>
-      <div>
-        <p class="eyebrow">BYD AGENT CONSOLE</p>
-        <h1>EDUARDO</h1>
-      </div>
+    <header class="compact-header">
+      <p class="compact-brand">BYD · EDUARDO</p>
       <div id="status" class="status" data-state="offline">OFFLINE</div>
     </header>
 
-    <section class="controls" aria-label="Terminal connection controls">
-      <label>
-        <span>Gateway token</span>
-        <input id="token" type="password" autocomplete="off" placeholder="Not stored">
-      </label>
-      <button id="connect" type="button">CONNECT</button>
+    <section class="connection-panel" aria-label="Gateway connection controls">
+      <div class="connection-actions">
+        <button id="pair" type="button">PAIR BY PHONE</button>
+        <button id="refresh" type="button" disabled>REFRESH</button>
+        <button id="fullscreen" type="button">FULLSCREEN</button>
+      </div>
+
+      <section id="pair-panel" class="pair-panel" hidden aria-live="polite">
+        <div class="pair-copy">
+          <p class="pair-title">SCAN ON YOUR PHONE</p>
+          <p id="pair-message">Scan this code, enter the gateway token on your phone, then return here.</p>
+        </div>
+        <div id="pair-qr" class="pair-qr" aria-label="Phone pairing QR code"></div>
+        <button id="new-pair" class="secondary" type="button">NEW QR</button>
+        <div class="manual-token">
+          <label for="token">Or enter token here</label>
+          <div class="manual-token-row">
+            <input id="token" type="password" autocomplete="off" placeholder="Gateway token">
+            <button id="connect" class="secondary" type="button">CONNECT</button>
+          </div>
+        </div>
+      </section>
+
       <label class="terminal-picker">
         <span>Herdr terminal</span>
         <select id="terminal-select" disabled>
-          <option value="">Connect to list terminals</option>
+          <option value="">Pair to list terminals</option>
         </select>
       </label>
-      <button id="refresh" type="button" disabled>REFRESH</button>
-      <button id="fullscreen" type="button">FULLSCREEN</button>
     </section>
 
     <section id="terminal-panel" class="terminal-panel">
@@ -45,7 +57,7 @@
 
   <script src="/vendor/xterm.js"></script>
   <script src="/vendor/addon-fit.js"></script>
+  <script src="/vendor/qrcode.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>
-

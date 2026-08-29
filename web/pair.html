@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pair BYD Console</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="pair-page">
+  <main class="pair-card">
+    <p class="compact-brand">BYD · EDUARDO</p>
+    <h1>Pair console</h1>
+    <p>Enter the gateway token from your secure source. It is sent only to the VPS over HTTPS, used once to authorize the waiting console, and is never sent back to the car.</p>
+    <form id="pair-form">
+      <label for="token">Gateway token</label>
+      <input id="token" type="password" autocomplete="off" autofocus>
+      <button id="pair" type="submit">PAIR CONSOLE</button>
+      <p id="status" class="pair-result" role="status"></p>
+    </form>
+  </main>
+  <script src="/pair.js"></script>
+</body>
+</html>

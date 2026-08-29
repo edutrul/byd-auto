@@ -82,6 +82,18 @@ For direct BYD browser access after the proof, see
 [`docs/DIRECT_ACCESS.md`](docs/DIRECT_ACCESS.md). It uses Caddy TLS in front of
 the still-loopback-only gateway; it never exposes the Bun port itself.
 
+### Phone-assisted pairing
+
+On the BYD console, tap **PAIR BY PHONE**. It displays a short-lived QR code.
+Scan it with a phone, enter the gateway token on the phone page, and return to
+the console; the existing WebSocket is then authorized and lists terminals.
+
+The QR contains only a random one-time pairing ID, never the gateway token.
+The token is submitted over same-origin HTTPS directly to the VPS, used to
+authorize the waiting WebSocket, and is not sent back to the car. QR codes
+expire after two minutes; tap **NEW QR** to try again. Manual token entry
+remains available below the QR as a fallback.
+
 ## Install with ADB (optional)
 
 ```bash
