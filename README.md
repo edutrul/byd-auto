@@ -60,6 +60,10 @@ See [`docs/HERDR_GATEWAY.md`](docs/HERDR_GATEWAY.md) for the verified Herdr
 For the exact laptop tunnel, browser test steps, and troubleshooting handoff,
 see [`docs/HANDOFF.md`](docs/HANDOFF.md).
 
+For direct BYD browser access after the proof, see
+[`docs/DIRECT_ACCESS.md`](docs/DIRECT_ACCESS.md). It uses Caddy TLS in front of
+the still-loopback-only gateway; it never exposes the Bun port itself.
+
 ## Install with ADB (optional)
 
 ```bash
@@ -87,5 +91,7 @@ server/                                     Bun WebSocket/Herdr gateway proof
 web/                                        Touch-friendly xterm.js proof client
 docs/HERDR_GATEWAY.md                       Verified protocol and operations
 docs/HANDOFF.md                             Fast laptop/VPS test and handoff guide
+docs/DIRECT_ACCESS.md                       HTTPS/WSS VPS deployment runbook
+deploy/                                     Caddy and systemd deployment templates
 CLAUDE.md                                   Repository workflow guidance
 ```
