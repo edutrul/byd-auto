@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { HerdrSocketClient } from "./herdr-socket.js";
@@ -12,6 +12,8 @@ const SOCKET_PATH = process.env.HERDR_SOCKET_PATH
   ?? join(homedir(), `.config/herdr/sessions/${SESSION}/herdr.sock`);
 const WEB_ROOT = join(import.meta.dir, "../web");
 const herdr = new HerdrSocketClient(SOCKET_PATH);
+const PAIRING_TTL_MS = 2 * 60 * 1000;
+const pairings = new Map();
 
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
   throw new Error("HERDR_GATEWAY_PORT must be a valid TCP port");
@@ -22,11 +24,14 @@ if (!TOKEN && !["127.0.0.1", "::1", "localhost"].includes(HOST)) {
 
 const files = new Map([
   ["/", ["index.html", "text/html; charset=utf-8"]],
+  ["/pair", ["pair.html", "text/html; charset=utf-8"]],
+  ["/pair.js", ["pair.js", "text/javascript; charset=utf-8"]],
   ["/app.js", ["app.js", "text/javascript; charset=utf-8"]],
   ["/style.css", ["style.css", "text/css; charset=utf-8"]],
   ["/vendor/xterm.js", ["vendor/xterm.js", "text/javascript; charset=utf-8"]],
   ["/vendor/xterm.css", ["vendor/xterm.css", "text/css; charset=utf-8"]],
-  ["/vendor/addon-fit.js", ["vendor/addon-fit.js", "text/javascript; charset=utf-8"]]
+  ["/vendor/addon-fit.js", ["vendor/addon-fit.js", "text/javascript; charset=utf-8"]],
+  ["/vendor/qrcode.js", ["vendor/qrcode.js", "text/javascript; charset=utf-8"]]
 ]);
 
 function tokensEqual(provided) {
@@ -54,6 +59,38 @@ function publicOrigin(request, url) {
     ? forwardedProto
     : url.protocol.slice(0, -1);
   return `${protocol}://${url.host}`;
+}
+
+function deletePairing(ws) {
+  const pairId = ws.data.pairId;
+  if (pairId) pairings.delete(pairId);
+  ws.data.pairId = null;
+}
+
+async function authenticate(ws) {
+  deletePairing(ws);
+  ws.data.authenticated = true;
+  send(ws, { type: "ready", session: SESSION });
+  await sendInventory(ws).catch((error) => send(ws, { type: "error", message: error.message }));
+}
+
+function createPairing(ws) {
+  deletePairing(ws);
+  const pairId = randomBytes(24).toString("base64url");
+  const expiresAt = Date.now() + PAIRING_TTL_MS;
+  ws.data.pairId = pairId;
+  pairings.set(pairId, { ws, expiresAt });
+  setTimeout(() => {
+    const pairing = pairings.get(pairId);
+    if (pairing?.expiresAt === expiresAt) {
+      pairings.delete(pairId);
+      if (pairing.ws.readyState === 1) {
+        pairing.ws.data.pairId = null;
+        send(pairing.ws, { type: "pair.expired" });
+      }
+    }
+  }, PAIRING_TTL_MS + 1000);
+  send(ws, { type: "pair.created", pairId, expiresAt });
 }
 
 function stopObserver(data) {
@@ -142,6 +179,26 @@ const server = Bun.serve({
   port: PORT,
   fetch(request, server) {
     const url = new URL(request.url);
+    if (url.pathname === "/pair/submit" && request.method === "POST") {
+      const origin = request.headers.get("origin");
+      if (origin !== publicOrigin(request, url)) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      return request.json().then(async ({ pairId, token }) => {
+        const pairing = pairings.get(typeof pairId === "string" ? pairId : "");
+        if (!pairing || pairing.expiresAt < Date.now()) {
+          if (pairing) pairings.delete(pairId);
+          return new Response("Pairing has expired. Start a new one on the console.", { status: 410 });
+        }
+        if (!tokensEqual(token)) return new Response("Invalid gateway token", { status: 401 });
+        if (pairing.ws.readyState !== 1) {
+          pairings.delete(pairId);
+          return new Response("Console is no longer connected", { status: 410 });
+        }
+        await authenticate(pairing.ws);
+        return new Response(null, { status: 204 });
+      }).catch(() => new Response("Expected JSON pairing request", { status: 400 }));
+    }
     if (url.pathname === "/ws") {
       const origin = request.headers.get("origin");
       if (origin && origin !== publicOrigin(request, url)) {
@@ -155,7 +212,8 @@ const server = Bun.serve({
           rows: 30,
           observer: null,
           observerGeneration: 0,
-          inputChain: Promise.resolve()
+          inputChain: Promise.resolve(),
+          pairId: null
         }
       });
       return upgraded ? undefined : new Response("Upgrade failed", { status: 400 });
@@ -189,14 +247,20 @@ const server = Bun.serve({
       }
 
       if (!ws.data.authenticated) {
+        if (message.type === "pair.create") {
+          if (!TOKEN) {
+            send(ws, { type: "error", message: "Phone pairing requires a gateway token" });
+          } else {
+            createPairing(ws);
+          }
+          return;
+        }
         if (message.type !== "auth" || !tokensEqual(message.token)) {
           send(ws, { type: "auth.failed" });
           ws.close(1008, "Authentication failed");
           return;
         }
-        ws.data.authenticated = true;
-        send(ws, { type: "ready", session: SESSION });
-        await sendInventory(ws).catch((error) => send(ws, { type: "error", message: error.message }));
+        await authenticate(ws);
         return;
       }
 
@@ -236,6 +300,7 @@ const server = Bun.serve({
       }
     },
     close(ws) {
+      deletePairing(ws);
       stopObserver(ws.data);
     }
   }
