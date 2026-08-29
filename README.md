@@ -56,6 +56,8 @@ chmod +x build-console.sh
 The shell is hard-coded to `https://byd.eduardotelaya.com/` and blocks
 navigation away from that origin. Build it only after the HTTPS endpoint in
 [`docs/DIRECT_ACCESS.md`](docs/DIRECT_ACCESS.md) is operational.
+If TLS or network loading fails, it cancels the connection and displays a
+retryable diagnostic screen; it never bypasses certificate validation.
 
 ## Herdr terminal gateway proof
 
