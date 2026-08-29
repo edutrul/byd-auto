@@ -1,0 +1,16 @@
+# Replace byd.eduardotelaya.com only if the dedicated production hostname changes.
+# Caddy obtains and renews the TLS certificate after DNS points this hostname to
+# the VPS. The Bun gateway itself remains private on 127.0.0.1:8790.
+byd.eduardotelaya.com {
+  encode zstd gzip
+
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options "nosniff"
+    Referrer-Policy "no-referrer"
+    X-Frame-Options "DENY"
+    -Server
+  }
+
+  reverse_proxy 127.0.0.1:8790
+}
