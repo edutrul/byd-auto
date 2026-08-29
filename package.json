@@ -1,0 +1,14 @@
+{
+  "name": "byd-auto",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gateway": "bun run server/gateway.js",
+    "test:e2e": "bun run server/e2e.js",
+    "smoke:herdr": "bun run server/smoke.js"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "0.10.0",
+    "@xterm/xterm": "5.5.0"
+  }
+}

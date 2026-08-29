@@ -1,4 +1,6 @@
 .build/
 .signing/
+node_modules/
+.env
 *.apk
 *.idsig
