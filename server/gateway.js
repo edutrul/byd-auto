@@ -45,6 +45,17 @@ function send(ws, message) {
   if (ws.readyState === 1) ws.send(JSON.stringify(message));
 }
 
+function publicOrigin(request, url) {
+  // Caddy terminates TLS and forwards to this loopback-only Bun listener over
+  // HTTP. Accept the browser's public HTTPS origin only when the trusted local
+  // proxy supplies a valid forwarded scheme; never accept an arbitrary value.
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const protocol = forwardedProto === "https" || forwardedProto === "http"
+    ? forwardedProto
+    : url.protocol.slice(0, -1);
+  return `${protocol}://${url.host}`;
+}
+
 function stopObserver(data) {
   data.observerGeneration += 1;
   if (data.observer) {
@@ -133,7 +144,9 @@ const server = Bun.serve({
     const url = new URL(request.url);
     if (url.pathname === "/ws") {
       const origin = request.headers.get("origin");
-      if (origin && origin !== url.origin) return new Response("Forbidden", { status: 403 });
+      if (origin && origin !== publicOrigin(request, url)) {
+        return new Response("Forbidden", { status: 403 });
+      }
       const upgraded = server.upgrade(request, {
         data: {
           authenticated: false,
