@@ -1,4 +1,5 @@
 .build/
+.build-console/
 .signing/
 node_modules/
 .env
