@@ -41,6 +41,22 @@ installation is not required.
 The local signing key is created once under `.signing/` and reused. Keep that
 key if you want future versions to update an already installed copy.
 
+## BYD Console APK
+
+`HelloBYD.apk` stays a zero-permission installation proof. The separate
+`BYDConsole.apk` is a constrained WebView shell for the secured gateway and
+therefore requests **only** `INTERNET`. It neither stores the gateway token nor
+embeds SSH, Codex, Claude, or Herdr credentials.
+
+```bash
+chmod +x build-console.sh
+./build-console.sh
+```
+
+The shell is hard-coded to `https://byd.eduardotelaya.com/` and blocks
+navigation away from that origin. Build it only after the HTTPS endpoint in
+[`docs/DIRECT_ACCESS.md`](docs/DIRECT_ACCESS.md) is operational.
+
 ## Herdr terminal gateway proof
 
 The repository now includes the first remote-control vertical slice:
@@ -87,6 +103,8 @@ issue with `Closes #<issue-number>`.
 AndroidManifest.xml                         App metadata and permission policy
 src/com/devywork/hellobyd/MainActivity.java Responsive Android UI
 build.sh                                    Reproducible APK build/sign pipeline
+build-console.sh                            BYDConsole APK build/sign pipeline
+console/                                    Minimal Internet-only Android WebView shell
 server/                                     Bun WebSocket/Herdr gateway proof
 web/                                        Touch-friendly xterm.js proof client
 docs/HERDR_GATEWAY.md                       Verified protocol and operations
