@@ -21,11 +21,17 @@ test ordinary APK sideloading on BYD DiLink.
 - Preserve `.signing/hello-byd-debug.keystore` locally so upgrades retain the
   same signing identity. Never commit the keystore.
 - Keep `minSdkVersion` compatible with Android 10-era DiLink systems.
+- Treat the BYD/browser as untrusted. Herdr sockets, SSH keys, GitHub tokens,
+  and Codex/Claude credentials must remain on the VPS.
+- Never start a new Codex or Claude process when a browser connects. Observe
+  and control only the explicitly selected existing Herdr terminal.
+- Keep the farm deferred until the terminal gateway proof is reliable.
 
 ## Commands
 
 ```bash
 ./build.sh
 adb install -r HelloBYD.apk
+bun run server/smoke.js
+bun run server/gateway.js
 ```
-

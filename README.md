@@ -41,6 +41,22 @@ installation is not required.
 The local signing key is created once under `.signing/` and reused. Keep that
 key if you want future versions to update an already installed copy.
 
+## Herdr terminal gateway proof
+
+The repository now includes the first remote-control vertical slice:
+
+```text
+browser/xterm.js → WebSocket → Herdr remote-tes → existing terminal PTY
+```
+
+It lists existing Herdr terminals, renders live ANSI frames, forwards terminal
+input through the local Herdr socket API, and reconnects without restarting the
+underlying Codex or Claude process. The gateway is loopback-only by default and
+never sends SSH keys or agent credentials to the browser.
+
+See [`docs/HERDR_GATEWAY.md`](docs/HERDR_GATEWAY.md) for the verified Herdr
+0.8.2 APIs, security model, VPS commands, and smoke tests.
+
 ## Install with ADB (optional)
 
 ```bash
@@ -64,6 +80,8 @@ issue with `Closes #<issue-number>`.
 AndroidManifest.xml                         App metadata and permission policy
 src/com/devywork/hellobyd/MainActivity.java Responsive Android UI
 build.sh                                    Reproducible APK build/sign pipeline
+server/                                     Bun WebSocket/Herdr gateway proof
+web/                                        Touch-friendly xterm.js proof client
+docs/HERDR_GATEWAY.md                       Verified protocol and operations
 CLAUDE.md                                   Repository workflow guidance
 ```
-

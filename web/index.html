@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>EDUARDO — Herdr Terminal</title>
+  <link rel="stylesheet" href="/vendor/xterm.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header>
+      <div>
+        <p class="eyebrow">BYD AGENT CONSOLE</p>
+        <h1>EDUARDO</h1>
+      </div>
+      <div id="status" class="status" data-state="offline">OFFLINE</div>
+    </header>
+
+    <section class="controls" aria-label="Terminal connection controls">
+      <label>
+        <span>Gateway token</span>
+        <input id="token" type="password" autocomplete="off" placeholder="Not stored">
+      </label>
+      <button id="connect" type="button">CONNECT</button>
+      <label class="terminal-picker">
+        <span>Herdr terminal</span>
+        <select id="terminal-select" disabled>
+          <option value="">Connect to list terminals</option>
+        </select>
+      </label>
+      <button id="refresh" type="button" disabled>REFRESH</button>
+      <button id="fullscreen" type="button">FULLSCREEN</button>
+    </section>
+
+    <section id="terminal-panel" class="terminal-panel">
+      <div id="terminal" aria-label="Herdr terminal output"></div>
+    </section>
+
+    <footer>
+      <span>remote-tes</span>
+      <span>Browser → WebSocket → Herdr → existing session</span>
+    </footer>
+  </main>
+
+  <script src="/vendor/xterm.js"></script>
+  <script src="/vendor/addon-fit.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
+
