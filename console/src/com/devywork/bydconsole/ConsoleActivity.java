@@ -5,15 +5,19 @@ import android.app.Activity;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.net.http.SslError;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceError;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.SslErrorHandler;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -24,6 +28,14 @@ public final class ConsoleActivity extends Activity {
     static final String CONSOLE_URL = "https://byd.eduardotelaya.com/";
     private WebView webView;
     private View offlineView;
+    private TextView offlineDetail;
+    private boolean pageFinished;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Runnable pageTimeout = () -> {
+        if (!pageFinished) {
+            showOffline("The secured gateway did not finish loading. Check the Internet and retry.");
+        }
+    };
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -57,7 +69,7 @@ public final class ConsoleActivity extends Activity {
         offlineView.setVisibility(View.GONE);
         setContentView(root);
 
-        webView.loadUrl(CONSOLE_URL);
+        loadConsole();
     }
 
     @Override
@@ -67,6 +79,27 @@ public final class ConsoleActivity extends Activity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        mainHandler.removeCallbacks(pageTimeout);
+        webView.destroy();
+        super.onDestroy();
+    }
+
+    private void loadConsole() {
+        pageFinished = false;
+        offlineView.setVisibility(View.GONE);
+        mainHandler.removeCallbacks(pageTimeout);
+        mainHandler.postDelayed(pageTimeout, 12000);
+        webView.loadUrl(CONSOLE_URL);
+    }
+
+    private void showOffline(String detail) {
+        mainHandler.removeCallbacks(pageTimeout);
+        offlineDetail.setText(detail);
+        offlineView.setVisibility(View.VISIBLE);
     }
 
     private View buildOfflineView() {
@@ -84,22 +117,19 @@ public final class ConsoleActivity extends Activity {
         title.setTextSize(28);
         title.setGravity(Gravity.CENTER);
 
-        TextView detail = new TextView(this);
-        detail.setText("Connect to the Internet, then retry the secured gateway.");
-        detail.setTextColor(Color.rgb(180, 205, 225));
-        detail.setTextSize(17);
-        detail.setGravity(Gravity.CENTER);
-        detail.setPadding(0, Math.round(18 * density), 0, Math.round(22 * density));
+        offlineDetail = new TextView(this);
+        offlineDetail.setText("Connect to the Internet, then retry the secured gateway.");
+        offlineDetail.setTextColor(Color.rgb(180, 205, 225));
+        offlineDetail.setTextSize(17);
+        offlineDetail.setGravity(Gravity.CENTER);
+        offlineDetail.setPadding(0, Math.round(18 * density), 0, Math.round(22 * density));
 
         Button retry = new Button(this);
         retry.setText("RETRY");
-        retry.setOnClickListener((ignored) -> {
-            offlineView.setVisibility(View.GONE);
-            webView.loadUrl(CONSOLE_URL);
-        });
+        retry.setOnClickListener((ignored) -> loadConsole());
 
         panel.addView(title, wrap());
-        panel.addView(detail, wrap());
+        panel.addView(offlineDetail, wrap());
         panel.addView(retry, wrap());
         return panel;
     }
@@ -110,6 +140,17 @@ public final class ConsoleActivity extends Activity {
     }
 
     private final class ConsoleWebViewClient extends WebViewClient {
+        @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            pageFinished = false;
+        }
+
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            pageFinished = true;
+            mainHandler.removeCallbacks(pageTimeout);
+        }
+
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             Uri uri = request.getUrl();
@@ -123,8 +164,17 @@ public final class ConsoleActivity extends Activity {
         public void onReceivedError(WebView view, WebResourceRequest request,
                                     WebResourceError error) {
             if (request.isForMainFrame()) {
-                offlineView.setVisibility(View.VISIBLE);
+                showOffline("Could not load the secured gateway (network error "
+                        + error.getErrorCode() + "). Retry after checking the connection.");
             }
+        }
+
+        @Override
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            // A terminal gateway must never continue through an invalid certificate.
+            handler.cancel();
+            showOffline("Secure connection failed (TLS error " + error.getPrimaryError()
+                    + "). The certificate was not bypassed.");
         }
 
         private boolean isConsoleUri(Uri uri) {
